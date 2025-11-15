@@ -370,22 +370,10 @@ export function OrderFlow({ medication }: OrderFlowProps) {
             value={orderDetails.paymentMethod}
             onValueChange={(value) => setOrderDetails({ ...orderDetails, paymentMethod: value })}
           >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="efectivo" id="efectivo" />
-              <Label htmlFor="efectivo">Efectivo</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="debito" id="debito" />
-              <Label htmlFor="debito">Tarjeta de débito</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="credito" id="credito" />
-              <Label htmlFor="credito">Tarjeta de crédito</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="mercadopago" id="mercadopago" />
-              <Label htmlFor="mercadopago">Mercado Pago</Label>
-            </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="efectivo" id="efectivo" />
+                <Label htmlFor="efectivo">Efectivo</Label>
+              </div>
           </RadioGroup>
         </CardContent>
       </Card>

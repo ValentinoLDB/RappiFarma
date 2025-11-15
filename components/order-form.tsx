@@ -27,7 +27,7 @@ export function OrderForm({ medication, pharmacyPrice, pharmacyName, deliveryFee
     quantity: 1,
     deliveryAddress: "",
     deliveryInstructions: "",
-    paymentMethod: "",
+    paymentMethod: "efectivo",
     prescriptionFile: null as File | null,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -307,12 +307,9 @@ export function OrderForm({ medication, pharmacyPrice, pharmacyName, deliveryFee
           <SelectTrigger className={errors.paymentMethod ? "border-destructive" : ""}>
             <SelectValue placeholder="Selecciona un método de pago" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="efectivo">Efectivo</SelectItem>
-            <SelectItem value="tarjeta-debito">Tarjeta de débito</SelectItem>
-            <SelectItem value="tarjeta-credito">Tarjeta de crédito</SelectItem>
-            <SelectItem value="transferencia">Transferencia bancaria</SelectItem>
-          </SelectContent>
+            <SelectContent>
+              <SelectItem value="efectivo">Efectivo</SelectItem>
+            </SelectContent>
         </Select>
         {errors.paymentMethod && <p className="text-sm text-destructive">{errors.paymentMethod}</p>}
       </div>

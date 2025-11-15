@@ -23,7 +23,7 @@ export function CheckoutForm() {
     instructions: "",
   })
 
-  const [paymentMethod, setPaymentMethod] = useState("card")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
   const [cardInfo, setCardInfo] = useState({
     number: "",
     expiry: "",
@@ -166,71 +166,17 @@ export function CheckoutForm() {
           <CardContent className="space-y-4">
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="card" id="card" />
-                <Label htmlFor="card">Tarjeta de crédito/débito</Label>
-              </div>
-              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="cash" id="cash" />
                 <Label htmlFor="cash">Efectivo contra entrega</Label>
               </div>
             </RadioGroup>
 
-            {paymentMethod === "card" && (
-              <div className="grid md:grid-cols-2 gap-4 mt-4 p-4 border rounded-lg">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="cardName">Nombre en la tarjeta *</Label>
-                  <Input
-                    id="cardName"
-                    value={cardInfo.name}
-                    onChange={(e) => setCardInfo((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Juan Pérez"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="cardNumber">Número de tarjeta *</Label>
-                  <Input
-                    id="cardNumber"
-                    value={cardInfo.number}
-                    onChange={(e) => setCardInfo((prev) => ({ ...prev, number: e.target.value }))}
-                    placeholder="1234 5678 9012 3456"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="expiry">Fecha de vencimiento *</Label>
-                  <Input
-                    id="expiry"
-                    value={cardInfo.expiry}
-                    onChange={(e) => setCardInfo((prev) => ({ ...prev, expiry: e.target.value }))}
-                    placeholder="MM/AA"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cvv">CVV *</Label>
-                  <Input
-                    id="cvv"
-                    value={cardInfo.cvv}
-                    onChange={(e) => setCardInfo((prev) => ({ ...prev, cvv: e.target.value }))}
-                    placeholder="123"
-                    required
-                  />
-                </div>
-              </div>
-            )}
-
-            {paymentMethod === "cash" && (
-              <Alert>
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Pagarás en efectivo al momento de la entrega. Asegúrate de tener el monto exacto.
-                </AlertDescription>
-              </Alert>
-            )}
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                Pagarás en efectivo al momento de la entrega. Asegúrate de tener el monto exacto.
+              </AlertDescription>
+            </Alert>
           </CardContent>
         </Card>
       </div>
