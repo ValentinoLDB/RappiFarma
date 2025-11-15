@@ -316,9 +316,7 @@ export function OrderTracking() {
             <span>Total</span>
             <span className="text-primary">${order.total.toLocaleString()}</span>
           </div>
-          {order.insuranceUsed && (
-            <p className="text-xs text-muted-foreground">Obra social utilizada: {order.insuranceUsed}</p>
-          )}
+          {/* Se removió la visualización de la obra social utilizada */}
         </div>
 
         <div className="border-t pt-4" />
