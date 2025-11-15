@@ -194,13 +194,7 @@ export function MedicationCatalog() {
           <p className="text-muted-foreground text-lg">
             Compara precios en multiples farmacias y encuentra el mejor precio con tu obra social
           </p>
-          {userInsurance && (
-            <div className="mt-4">
-              <Badge variant="secondary" className="text-sm">
-                Precios calculados con {userInsurance}
-              </Badge>
-            </div>
-          )}
+          {/* Mensaje de obra social removido: los precios ya no dependen de la obra social */}
         </div>
 
         <div className="bg-card border border-border rounded-lg p-6 mb-8">
