@@ -223,6 +223,15 @@ export async function POST(request: NextRequest) {
 
     const prescriptionUploaded = Boolean(prescriptionFile ?? body.prescriptionUploaded)
 
+    // Validate stock for all items before creating order
+    for (const item of normalizedItems) {
+      const invRow = db.prepare('SELECT * FROM inventory WHERE pharmacyId = ? AND medicationId = ?').get(body.pharmacyId, item.medicationId)
+      const available = invRow ? Number(invRow.stock) : 0
+      if (available < item.quantity) {
+        return NextResponse.json({ error: 'Stock insuficiente', medicationId: item.medicationId, medicationName: item.medicationName, available }, { status: 400 })
+      }
+    }
+
     // Use a transaction: create order + items + update inventory atomically
     const createOrderTx = db.transaction(() => {
       orderStatements.insert.run(

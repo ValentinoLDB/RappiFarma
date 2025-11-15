@@ -72,10 +72,14 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      const medications = Array.from(medicationsMap.values()).map((medication) => ({
-        ...medication,
-        prices: medication.prices.sort((a: any, b: any) => a.price - b.price),
-      }))
+      // Filter out price entries with stock <= 0 so clients don't see out-of-stock options
+      const medications = Array.from(medicationsMap.values())
+        .map((medication) => ({
+          ...medication,
+          prices: medication.prices.filter((p: any) => Number(p.stock) > 0).sort((a: any, b: any) => a.price - b.price),
+        }))
+        // Remove medications that have no available prices (all stock 0)
+        .filter((medication) => medication.prices.length > 0)
 
       if (medicationIdParam) {
         if (medications.length === 0) {
