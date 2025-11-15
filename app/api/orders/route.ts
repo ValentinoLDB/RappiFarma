@@ -2,7 +2,7 @@ import { randomUUID } from "crypto"
 import { promises as fs } from "fs"
 import path from "path"
 import { NextRequest, NextResponse } from "next/server"
-import { orderStatements, orderItemStatements, userStatements } from "@/lib/database"
+import { db, orderStatements, orderItemStatements, userStatements, inventoryStatements } from "@/lib/database"
 import type { OrderStatus, OrderWithItems, PrescriptionStatus } from "@/lib/types/orders"
 import { ORDER_STATUS_SEQUENCE } from "@/lib/types/orders"
 import { mapOrderRow, toNumber } from "@/lib/server/orders"
@@ -223,48 +223,65 @@ export async function POST(request: NextRequest) {
 
     const prescriptionUploaded = Boolean(prescriptionFile ?? body.prescriptionUploaded)
 
-    orderStatements.insert.run(
-      orderId,
-      orderNumber,
-      now,
-      "processing",
-      body.customerId,
-      body.pharmacyId,
-      body.pharmacyName,
-      null,
-      subtotal,
-      deliveryFee,
-      insuranceDiscount,
-      total,
-      body.deliveryAddress,
-      body.deliveryInstructions ?? null,
-      prescriptionRequired ? 1 : 0,
-      prescriptionUploaded ? 1 : 0,
-      prescriptionStatus,
-      body.prescriptionRejectionReason ?? null,
-      originalFileName,
-      relativeFilePath,
-      estimatedDelivery,
-      null,
-      body.paymentMethod,
-      body.insuranceUsed ?? "",
-      now,
-      now,
-    )
-
-    normalizedItems.forEach((item) => {
-      orderItemStatements.insert.run(
+    // Use a transaction: create order + items + update inventory atomically
+    const createOrderTx = db.transaction(() => {
+      orderStatements.insert.run(
         orderId,
-        item.medicationId,
-        item.medicationName,
-        item.brand,
-        item.quantity,
-        item.unitPrice,
-        item.totalPrice,
-        item.finalPrice,
-        item.insuranceSavings,
+        orderNumber,
+        now,
+        "processing",
+        body.customerId,
+        body.pharmacyId,
+        body.pharmacyName,
+        null,
+        subtotal,
+        deliveryFee,
+        insuranceDiscount,
+        total,
+        body.deliveryAddress,
+        body.deliveryInstructions ?? null,
+        prescriptionRequired ? 1 : 0,
+        prescriptionUploaded ? 1 : 0,
+        prescriptionStatus,
+        body.prescriptionRejectionReason ?? null,
+        originalFileName,
+        relativeFilePath,
+        estimatedDelivery,
+        null,
+        body.paymentMethod,
+        body.insuranceUsed ?? "",
+        now,
+        now,
       )
+
+      // For each item, insert order item and decrement inventory for that pharmacy
+      normalizedItems.forEach((item) => {
+        orderItemStatements.insert.run(
+          orderId,
+          item.medicationId,
+          item.medicationName,
+          item.brand,
+          item.quantity,
+          item.unitPrice,
+          item.totalPrice,
+          item.finalPrice,
+          item.insuranceSavings,
+        )
+
+        // Update inventory: try to find existing entry for this pharmacy+medication
+        const invRow = db.prepare('SELECT * FROM inventory WHERE pharmacyId = ? AND medicationId = ?').get(body.pharmacyId, item.medicationId)
+        if (invRow) {
+          const newStock = invRow.stock - item.quantity
+          inventoryStatements.update.run(invRow.precio ?? item.unitPrice, newStock, now, body.pharmacyId, item.medicationId)
+        } else {
+          // If no inventory record exists, insert one with negative stock to reflect reserved quantity
+          // This helps track demand even if initial stock wasn't seeded.
+          inventoryStatements.insert.run(body.pharmacyId, item.medicationId, item.unitPrice, -item.quantity, now)
+        }
+      })
     })
+
+    createOrderTx()
 
     const createdOrderRow = orderStatements.getById.get(orderId)
     const createdOrder = createdOrderRow ? mapOrderRow(createdOrderRow) : null

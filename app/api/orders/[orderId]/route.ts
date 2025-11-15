@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { orderStatements } from "@/lib/database"
+import { db, orderStatements, orderItemStatements, inventoryStatements } from "@/lib/database"
 import { mapOrderRow } from "@/lib/server/orders"
 import type { OrderStatus } from "@/lib/types/orders"
 import { isOrderStatus } from "@/lib/types/orders"
@@ -94,6 +94,28 @@ export async function PATCH(request: NextRequest, { params }: { params: { orderI
       now,
       orderId,
     )
+
+    // If the order was cancelled, restore inventory quantities for the items
+    if (nextStatus === "cancelled") {
+      try {
+        const restoreTx = db.transaction(() => {
+          const items = orderItemStatements.getByOrderId.all(orderId)
+          items.forEach((item: any) => {
+            const invRow = db.prepare('SELECT * FROM inventory WHERE pharmacyId = ? AND medicationId = ?').get(currentOrder.pharmacyId, item.medicationId)
+            if (invRow) {
+              const newStock = invRow.stock + item.quantity
+              inventoryStatements.update.run(invRow.precio ?? 0, newStock, now, currentOrder.pharmacyId, item.medicationId)
+            } else {
+              // If no inventory record exists, insert a new one with the restored quantity
+              inventoryStatements.insert.run(currentOrder.pharmacyId, item.medicationId, 0, item.quantity, now)
+            }
+          })
+        })
+        restoreTx()
+      } catch (invErr) {
+        console.error('Error restoring inventory for cancelled order', invErr)
+      }
+    }
 
   const updatedRow = orderStatements.getById.get(orderId)
   const updatedOrder = updatedRow ? mapOrderRow(updatedRow) : null
